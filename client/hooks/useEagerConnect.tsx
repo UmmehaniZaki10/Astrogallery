@@ -6,29 +6,21 @@ const useEagerConnect = () => {
   const [account, setAccount] = useState('')
 
   const connectWallet = async () => {
-    try {
-      const { ethereum } = window
-      const env = 'testnet'
-      if (ethereum) {
-        ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [
-            {
-              chainId: '0x61',
-              rpcUrls: ['https://data-seed-prebsc-1-s1.binance.org:8545'],
-              chainName: 'Binance Test Network',
-              nativeCurrency: {
-                name: 'BNB',
-                symbol: 'BNB',
-                decimals: 18,
-              },
-              blockExplorerUrls: ['https://testnet.bscscan.io'],
-            },
-          ],
+    const { ethereum } = window
+    const config = network_config[process.env.ENV]
+    if (ethereum) {
+      try {
+        await ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: config.chainId }],
         })
+      } catch (error) {
+        await ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [config],
+        })
+        console.log('Error connecting to metamask', error)
       }
-    } catch (error) {
-      console.log('Error connecting to metamask', error)
     }
   }
 
@@ -39,20 +31,20 @@ const useEagerConnect = () => {
     const env = 'testnet'
 
     if (chainId !== '0x61') {
-      connectWallet()
+      await connectWallet()
     }
   }
   // Checks if wallet is connected
   const checkIfWalletIsConnected = async () => {
     const { ethereum } = window
     if (ethereum) {
-      console.log('here', ethereum)
       await checkCorrectNetwork()
       const accounts = await ethereum.request({ method: 'eth_accounts' })
       console.log(accounts)
       if (accounts.length !== 0) {
         console.log('Found authorized Account: ', accounts[0])
         setAccount(accounts[0])
+        return
       } else {
         console.log('No authorized account found')
       }
@@ -65,6 +57,7 @@ const useEagerConnect = () => {
     checkIfWalletIsConnected()
     if (window.ethereum) {
       window.ethereum.on('chainChanged', () => {
+        setAccount('')
         checkIfWalletIsConnected()
       })
       window.ethereum.on('accountsChanged', () => {
