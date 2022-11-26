@@ -68,6 +68,7 @@ contract StakingABB {
 
     function calculateUserReward(address account)
         external
+        view
         returns (uint256 reward)
     {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
@@ -85,6 +86,7 @@ contract StakingABB {
 
     function claimableTokens(address account)
         external
+        view
         returns (uint256 tokens)
     {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
