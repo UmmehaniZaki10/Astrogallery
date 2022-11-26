@@ -11,24 +11,26 @@ contract StakingABB {
         uint256 depositTimestamp;
         uint256 amount;
         uint256 lockUpPeriod;
-        address solanaAddress;
+        string solanaAddress;
+        uint256 nextIndex;
     }
     struct StakeDetail {
         uint256 withdrawnAmount;
         StakedAmount[] stakedAmounts;
+        uint256 startIndex;
     }
     event Stake(
         address indexed account,
         uint256 amount,
         uint256 lockUpPeriod,
-        address solanaAddress
+        string solanaAddress
     );
     event Withdraw(
         address indexed account,
         uint256 amount,
         uint256 lockUpPeriod,
         uint256 depositTimestamp,
-        address solanaAddress,
+        string solanaAddress,
         uint256 reward
     );
 
@@ -106,7 +108,7 @@ contract StakingABB {
     function stake(
         uint256 amount,
         uint256 lockUpPeriod,
-        address solanaAddress
+        string memory solanaAddress
     ) external {
         address account = msg.sender;
         bool success = tokenX.transferFrom(account, address(this), amount);
@@ -115,7 +117,8 @@ contract StakingABB {
             block.timestamp,
             amount,
             lockUpPeriod,
-            solanaAddress
+            solanaAddress,
+            stakeDetailPerUser[account].stakedAmounts.length
         );
         stakeDetailPerUser[account].stakedAmounts.push(amountStaked);
         totalStakedAmount += amount;
@@ -127,7 +130,11 @@ contract StakingABB {
             msg.sender
         ].stakedAmounts;
         StakedAmount[] memory revisedUserStakingDetails;
-        for (uint256 n = 0; n < userStakingDetails.length; n++) {
+
+        uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
+        uint256 n = startIndex;
+        uint256 formerIndex;
+        while (n < userStakingDetails.length) {
             if (
                 userStakingDetails[n].depositTimestamp +
                     userStakingDetails[n].lockUpPeriod <=
@@ -144,7 +151,6 @@ contract StakingABB {
                     userStakingDetails[n].lockUpPeriod,
                     userStakingDetails[n].lockUpPeriod
                 );
-
                 emit Withdraw(
                     msg.sender,
                     userStakingDetails[n].amount,
@@ -153,16 +159,17 @@ contract StakingABB {
                     userStakingDetails[n].solanaAddress,
                     reward
                 );
+                if (n == startIndex) {
+                    startIndex = userStakingDetails[n].nextIndex;
+                } else {
+                    userStakingDetails[formerIndex]
+                        .nextIndex = userStakingDetails[n].nextIndex;
+                }
             } else {
-                revisedUserStakingDetails[
-                    userStakingDetails.length
-                ] = userStakingDetails[n];
+                formerIndex = n;
             }
+            n = userStakingDetails[n].nextIndex;
         }
-        for (uint256 n = 0; n < revisedUserStakingDetails.length; n++) {
-            stakeDetailPerUser[msg.sender].stakedAmounts[
-                    n
-                ] = revisedUserStakingDetails[n];
-        }
+        stakeDetailPerUser[msg.sender].startIndex = startIndex;
     }
 }
