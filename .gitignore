@@ -1,2 +1,10 @@
-node_modules/*
+client/node_modules/*
 env/*
+
+# next.js
+client/.next/
+client/out/
+.idea/
+
+# production
+client/build
