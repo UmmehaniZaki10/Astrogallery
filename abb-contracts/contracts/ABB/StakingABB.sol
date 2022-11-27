@@ -93,12 +93,11 @@ contract StakingABB is ReentrancyGuard {
 
     function claimableTokens(
         address account // CHECK: linked list
-    ) external view returns (uint256 tokens) {
+    ) external view returns (uint256 amountToWithdraw) {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
             .stakedAmounts;
         uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
         uint256 n = startIndex;
-        uint256 amountToWithdraw;
         while (n < userStakingDetails.length) {
             if (
                 userStakingDetails[n].depositTimestamp +

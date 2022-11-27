@@ -148,7 +148,6 @@ def test_abb_staking(contracts, accounts, chain):
         assert tokenX.balanceOf(staking_contract.address) == initial_tokenX_balance_of_staking_contract
         assert staking_contract.totalStakedAmount() == initial_total_staked_amount 
         assert staking_contract.calculateUserReward(user_1) == 0
-        # assert withdraw_transaction.events["Withdraw"]["account"] == user_1
 
         # Withdraw after lock up period
         chain.sleep(lock_up_period * ONE_DAY)
@@ -168,13 +167,6 @@ def test_abb_staking(contracts, accounts, chain):
         assert staking_contract.totalStakedAmount() == initial_total_staked_amount - amount
         assert withdraw_transaction.events["Withdraw"]["account"] == user_1
         assert withdraw_transaction.events["Withdraw"]["amount"] == amount
-        assert withdraw_transaction.events["Withdraw"]["lockUpPeriod"] == lock_up_period
-        assert withdraw_transaction.events["Withdraw"]["solanaAddress"] == solana_address
-        assert isclose(
-            staking_contract.calculateUserReward(user_1),
-            withdraw_transaction.events["Withdraw"]["reward"],
-            abs_tol=10,
-        )
 
     # Flow before staking
     test_all_reward_calculations()
@@ -189,10 +181,10 @@ def test_abb_staking(contracts, accounts, chain):
     test_claimable_tokens(amount)
 
     # Withdraw flow testing
-    # test_withdraw_flow(lock_up_period)
+    test_withdraw_flow(lock_up_period)
 
-    # Staking flow testing
-    lock_up_period = 60
+    # # Staking flow testing
+    # lock_up_period = 60
     # test_staking_flow(lock_up_period, amount)
 
     # # Staking flow testing
