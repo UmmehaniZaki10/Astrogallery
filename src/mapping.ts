@@ -7,7 +7,7 @@ export function handleStake(event: Stake): void {
   stakingData.amount = event.params.amount
   stakingData.solanaAddress = event.params.solanaAddress
   stakingData.lockUpPeriod = event.params.lockUpPeriod
-  stakingData.stakingTime = event.params.unlockTime
+  stakingData.unlockTime = event.params.unlockTime
   stakingData.stakingTime = event.params.currentTime
   stakingData.save()  
 }
@@ -25,7 +25,7 @@ export function handleApprove(event: Stake): void {
 //   stakingDatas {
 //     id
 //     lockUpPeriod
-//     address
+//     account
 //     amount
 //     solanaAddress
 //     stakingTime
