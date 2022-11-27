@@ -2,10 +2,11 @@
 
 pragma solidity 0.8.4;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract StakingABB {
-    ERC20 public tokenX;
+contract StakingABB is ReentrancyGuard {
+    ERC20 public ABB;
     uint256 public totalStakedAmount;
     struct StakedAmount {
         uint256 depositTimestamp;
@@ -15,7 +16,7 @@ contract StakingABB {
         uint256 nextIndex;
     }
     struct StakeDetail {
-        uint256 withdrawnAmount;
+        uint256 collectedRewards; // TODO: Value not updating
         StakedAmount[] stakedAmounts;
         uint256 startIndex;
     }
@@ -23,23 +24,18 @@ contract StakingABB {
         address indexed account,
         uint256 amount,
         uint256 lockUpPeriod,
-        string solanaAddress
-    );
-    event Withdraw(
-        address indexed account,
-        uint256 amount,
-        uint256 lockUpPeriod,
-        uint256 depositTimestamp,
         string solanaAddress,
-        uint256 reward
+        uint256 currentTime,
+        uint256 unlockTime
     );
+    event Withdraw(address indexed account, uint256 amount);
 
     mapping(address => StakeDetail) public stakeDetailPerUser;
     mapping(uint256 => uint256) public lockupDaysToAPY;
 
     // Sets the lock-up days with their corresponding APY in the constructor
-    constructor(ERC20 _tokenX) {
-        tokenX = _tokenX;
+    constructor(ERC20 token) {
+        ABB = token;
         lockupDaysToAPY[30] = 500;
         lockupDaysToAPY[60] = 1000;
         lockupDaysToAPY[90] = 1500;
@@ -49,11 +45,13 @@ contract StakingABB {
     function _calculateReward(
         uint256 amount,
         uint256 lockUpDays,
-        uint256 dayCount
+        uint256 currentDayCount
     ) internal view returns (uint256 reward) {
-        dayCount = dayCount > lockUpDays ? lockUpDays : dayCount;
+        currentDayCount = currentDayCount > lockUpDays
+            ? lockUpDays
+            : currentDayCount;
         reward =
-            (lockupDaysToAPY[lockUpDays] * amount * dayCount) /
+            (lockupDaysToAPY[lockUpDays] * amount * currentDayCount) /
             (365 * 1e4);
     }
 
@@ -64,20 +62,17 @@ contract StakingABB {
         view
         returns (uint256 reward)
     {
-        uint256 dayCount = lockUpDays;
-        reward = _calculateReward(amount, lockUpDays, dayCount);
+        reward = _calculateReward(amount, lockUpDays, lockUpDays);
     }
 
-    function calculateUserReward(address account)
-        external
-        view
-        returns (uint256 reward)
-    {
+    function calculateUserReward(
+        address account // TODO: linked list + stakeDetailPerUser[msg.sender].collectedRewards
+    ) external view returns (uint256 reward) {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
             .stakedAmounts;
         for (uint256 n = 0; n < userStakingDetails.length; n++) {
             uint256 dayCount = (block.timestamp -
-                userStakingDetails[n].depositTimestamp) / 86400;
+                userStakingDetails[n].depositTimestamp) / 1 days;
             reward += _calculateReward(
                 userStakingDetails[n].amount,
                 userStakingDetails[n].lockUpPeriod,
@@ -86,17 +81,15 @@ contract StakingABB {
         }
     }
 
-    function claimableTokens(address account)
-        external
-        view
-        returns (uint256 tokens)
-    {
+    function claimableTokens(
+        address account // TODO: linked list
+    ) external view returns (uint256 tokens) {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
             .stakedAmounts;
         for (uint256 n = 0; n < userStakingDetails.length; n++) {
             if (
                 userStakingDetails[n].depositTimestamp +
-                    (userStakingDetails[n].lockUpPeriod * 86400) <=
+                    (userStakingDetails[n].lockUpPeriod * 1 days) <=
                 block.timestamp
             ) {
                 tokens += userStakingDetails[n].amount;
@@ -109,12 +102,12 @@ contract StakingABB {
         uint256 amount,
         uint256 lockUpPeriod,
         string memory solanaAddress
-    ) external {
+    ) external nonReentrant {
+        // TODO : non-reenterncy
         address account = msg.sender;
-        bool success = tokenX.transferFrom(account, address(this), amount);
-        require(success, "Staking didn't go through");
+        uint256 currentTime = block.timestamp;
         StakedAmount memory amountStaked = StakedAmount(
-            block.timestamp,
+            currentTime,
             amount,
             lockUpPeriod,
             solanaAddress,
@@ -122,10 +115,20 @@ contract StakingABB {
         );
         stakeDetailPerUser[account].stakedAmounts.push(amountStaked);
         totalStakedAmount += amount;
-        emit Stake(account, amount, lockUpPeriod, solanaAddress);
+
+        bool success = ABB.transferFrom(account, address(this), amount); // TODO: move to the end
+        require(success, "Staking didn't go through");
+        emit Stake(
+            account,
+            amount,
+            lockUpPeriod,
+            solanaAddress,
+            currentTime,
+            currentTime + lockUpPeriod * 1 days
+        ); // TODO: Add expiration and creation time
     }
 
-    function withdraw() external {
+    function withdraw() external nonReentrant {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[
             msg.sender
         ].stakedAmounts;
@@ -134,31 +137,21 @@ contract StakingABB {
         uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
         uint256 n = startIndex;
         uint256 formerIndex;
+        uint256 amountToWithdraw;
+        uint256 collectedRewards;
         while (n < userStakingDetails.length) {
             if (
                 userStakingDetails[n].depositTimestamp +
                     userStakingDetails[n].lockUpPeriod <=
                 block.timestamp
             ) {
-                bool success = tokenX.transfer(
-                    msg.sender,
-                    userStakingDetails[n].amount
-                );
-                require(success, "The Withdrawal didn't go through");
-                totalStakedAmount -= userStakingDetails[n].amount;
-                uint256 reward = _calculateReward(
+                amountToWithdraw += userStakingDetails[n].amount;
+                collectedRewards += _calculateReward(
                     userStakingDetails[n].amount,
                     userStakingDetails[n].lockUpPeriod,
                     userStakingDetails[n].lockUpPeriod
-                );
-                emit Withdraw(
-                    msg.sender,
-                    userStakingDetails[n].amount,
-                    userStakingDetails[n].lockUpPeriod,
-                    userStakingDetails[n].depositTimestamp,
-                    userStakingDetails[n].solanaAddress,
-                    reward
-                );
+                ); // TODO : maintain a user level variable which adds up this value
+
                 if (n == startIndex) {
                     startIndex = userStakingDetails[n].nextIndex;
                 } else {
@@ -171,5 +164,11 @@ contract StakingABB {
             n = userStakingDetails[n].nextIndex;
         }
         stakeDetailPerUser[msg.sender].startIndex = startIndex;
+        stakeDetailPerUser[msg.sender].collectedRewards = collectedRewards;
+        totalStakedAmount -= amountToWithdraw; //TODO: DO a cumulative difference at the end
+
+        bool success = ABB.transfer(msg.sender, amountToWithdraw); // TODO: DO a cumulative transfer at the end
+        require(success, "The Withdrawal didn't go through");
+        emit Withdraw(msg.sender, amountToWithdraw); //TODO :  msg.sender, amount are enough
     }
 }

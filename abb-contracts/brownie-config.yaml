@@ -13,9 +13,8 @@ compiler:
     optimizer:
       enabled: true
       runs: 1
-    remappings:
-      # - "@openzeppelin=/home/lenovo/.brownie/packages/OpenZeppelin/openzeppelin-contracts@4.3.2"
-      - "@openzeppelin=/home/user/.brownie/packages/OpenZeppelin/openzeppelin-contracts@4.3.2"
-      # - '@openzeppelin=/home/yash/.brownie/packages/OpenZeppelin/openzeppelin-contracts@4.3.2'
+    remappings:            
+       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.7.3"
+
 
 dotenv: .env
