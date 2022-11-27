@@ -2,7 +2,7 @@ type StakingData @entity {
   id: Bytes! 
   account: Bytes
   amount: BigInt
-  lockUpPeriod:Int
+  lockUpPeriod:BigInt
   solanaAddress: String
   stakingTime: BigInt
   unlockTime: BigInt

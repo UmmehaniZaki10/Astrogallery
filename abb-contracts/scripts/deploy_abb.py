@@ -13,8 +13,11 @@ def main():
     staking_contract_address = None
 
     if network.show_active() == "bsc-test":
-        admin = accounts.add(os.environ["ADMIN"])
+        admin = accounts.add(os.environ["BSC_TEST_ADMIN"])
         token_contract_address = "0xA167211Aa0DcD4453Bc7D05d5CA0667De25fa2f6"
+    elif network.show_active() == "bsc-main":
+        admin = accounts.add(os.environ["BSC_MAIN_ADMIN"])
+        token_contract_address = "0x277aE79C42c859cA858d5A92C22222C8b65c6D94"
 
     ########### Get TokenX ###########
 
