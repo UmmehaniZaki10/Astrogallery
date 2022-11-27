@@ -268,17 +268,3 @@ def test_abb_staking(contracts, accounts, chain):
     test_withdraw_flow(30, amount_1, user_4)
     traverse(user_4)
 
-    ##### FLOW 5 : USER WITH MULTIPLE WITHDRAW BLOCKS
-    lock_up_period = 30
-    test_initital_set_up(transfer_amount, user_2)
-    test_staking_flow(lock_up_period, amount_1, user_2)
-    test_rewards(lock_up_period, amount_1, user_2)
-    test_claimable_tokens(amount_1, user_2)
-    test_staking_flow(60, amount_1, user_2)
-    test_staking_flow(90, amount_1, user_2)
-    test_staking_flow(30, amount_1, user_2)
-    test_staking_flow(90, amount_1, user_2)
-    traverse(user_2)
-    test_withdraw_flow(60, 300e18, user_2)
-
-    traverse(user_2)
