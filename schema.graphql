@@ -1,0 +1,6 @@
+type StakingData @entity {
+  id: String! 
+  address: Bytes
+  amount: BigInt
+  solanaAddress : Bytes
+}

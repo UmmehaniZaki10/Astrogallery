@@ -1,0 +1,25 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: StakingABB
+    network: arbitrum-goerli
+    source:
+      address: '0x7C272Ad4A8749273e22a32c627Bd3D13C759bEB4'
+      abi: StakingABB
+      startBlock: 130000 
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - StakingData
+      abis:
+        - name: StakingABB
+          file: ./abis/StakingABB.json
+      eventHandlers:
+        - event: Stake(indexed address,uint256,uint256,address)
+          handler: handleStake
+      file: ./src/mapping.ts
+  
