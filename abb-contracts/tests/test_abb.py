@@ -12,6 +12,7 @@ def test_abb_staking(contracts, accounts, chain):
     user_2 = accounts[3]
     user_3 = accounts[4]
     user_4 = accounts[5]
+    user_5 = accounts[6]
     ONE_DAY = 86400
     transfer_amount = 100000 * int(1e18)
     amount_1 = 100 * int(1e18)
@@ -268,3 +269,16 @@ def test_abb_staking(contracts, accounts, chain):
     traverse(user_4)
     test_withdraw_flow(30, amount_1, user_4)
     traverse(user_4)
+
+    ##### FLOW 5 : USER WITH MULTIPLE STAKES, WITHDRAWS THE LAST 2 STAKE AMOUNT
+    lock_up_period = 90
+    test_initital_set_up(transfer_amount,user_5)
+    test_staking_flow(lock_up_period, amount_1, user_5)
+    test_rewards(lock_up_period, amount_1, user_5)
+    # test_claimable_tokens(amount_1, user_4)
+    test_staking_flow(90, amount_1, user_5)
+    test_staking_flow(30, amount_1, user_5)
+    test_staking_flow(30, amount_1, user_5)
+    traverse(user_5)
+    test_withdraw_flow(30, amount_1*2, user_5)
+    traverse(user_5)
