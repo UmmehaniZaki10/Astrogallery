@@ -177,6 +177,7 @@ def test_abb_staking(contracts, accounts, chain):
         initial_total_staked_amount = staking_contract.totalStakedAmount()
         initial_user_balance = tokenX.balanceOf(user)
         claimable_tokens = staking_contract.claimableTokens(user)
+        user_reward = staking_contract.calculateUserReward(user_1)
         withdraw_transaction = staking_contract.withdraw(
             {"from": user}
         )
@@ -190,14 +191,13 @@ def test_abb_staking(contracts, accounts, chain):
         assert (
             staking_contract.claimableTokens(user) == 0
         ), "Incorrect claimable tokens"
+        assert staking_contract.calculateUserReward(user_1) == user_reward
 
-        
     # Flow before staking
     test_all_reward_calculations()
     test_user_flow_pre_staking()
 
-    
-    ##### FLOW 1 : USER WITH ONE STAKES, WITHDRAWS THE STAKE AMOUNT
+    # FLOW 1 : USER WITH ONE STAKES, WITHDRAWS THE STAKE AMOUNT
     lock_up_period = 30
     chain.snapshot()
     test_initital_set_up(transfer_amount, user_1)
@@ -211,14 +211,16 @@ def test_abb_staking(contracts, accounts, chain):
     # Additional Checks
     assert isclose(
         staking_contract.calculateUserReward(user_1),
-        user_reward + (apy[str(lock_up_period)] * amount_1 * lock_up_period) / 365,
+        user_reward + (apy[str(lock_up_period)] *
+                       amount_1 * lock_up_period) / 365,
         abs_tol=10,
     )
     chain.sleep(int(lock_up_period) * ONE_DAY)
     chain.mine(2)
     assert isclose(
         staking_contract.calculateUserReward(user_1),
-        user_reward + (apy[str(lock_up_period)] * amount_1 * lock_up_period) / 365,
+        user_reward + (apy[str(lock_up_period)] *
+                       amount_1 * lock_up_period) / 365,
         abs_tol=10,
     )
     chain.sleep(lock_up_period * ONE_DAY)
@@ -227,11 +229,10 @@ def test_abb_staking(contracts, accounts, chain):
         staking_contract.claimableTokens(user_1) == 0
     ), "Incorrect claimable tokens"
     chain.revert()
-    
 
-    ###### FLOW 2 : USER WITH MULTIPLE STAKES, WITHDRAWS THE FIRST STAKE AMOUNT
+    # FLOW 2 : USER WITH MULTIPLE STAKES, WITHDRAWS THE FIRST STAKE AMOUNT
     lock_up_period = 30
-    test_initital_set_up(transfer_amount,user_2)
+    test_initital_set_up(transfer_amount, user_2)
     test_staking_flow(lock_up_period, amount_1, user_2)
     test_rewards(lock_up_period, amount_1, user_2)
     test_claimable_tokens(amount_1, user_2)
@@ -242,9 +243,9 @@ def test_abb_staking(contracts, accounts, chain):
     test_withdraw_flow(lock_up_period, amount_1, user_2)
     traverse(user_2)
 
-    ##### FLOW 3 : USER WITH MULTIPLE STAKES, WITHDRAWS THE FIRST 2 STAKE AMOUNTS
+    # FLOW 3 : USER WITH MULTIPLE STAKES, WITHDRAWS THE FIRST 2 STAKE AMOUNTS
     lock_up_period = 30
-    test_initital_set_up(transfer_amount,user_3)
+    test_initital_set_up(transfer_amount, user_3)
     test_staking_flow(lock_up_period, amount_1, user_3)
     test_rewards(lock_up_period, amount_1, user_3)
     test_claimable_tokens(amount_1, user_3)
@@ -255,9 +256,9 @@ def test_abb_staking(contracts, accounts, chain):
     test_withdraw_flow(lock_up_period, amount_1*2, user_3)
     traverse(user_3)
 
-    ##### FLOW 4 : USER WITH ONE STAKE, WITHDRAWS THE LAST STAKE AMOUNT
+    # FLOW 4 : USER WITH ONE STAKE, WITHDRAWS THE LAST STAKE AMOUNT
     lock_up_period = 90
-    test_initital_set_up(transfer_amount,user_4)
+    test_initital_set_up(transfer_amount, user_4)
     test_staking_flow(lock_up_period, amount_1, user_4)
     test_rewards(lock_up_period, amount_1, user_4)
     # test_claimable_tokens(amount_1, user_4)
@@ -267,4 +268,3 @@ def test_abb_staking(contracts, accounts, chain):
     traverse(user_4)
     test_withdraw_flow(30, amount_1, user_4)
     traverse(user_4)
-
