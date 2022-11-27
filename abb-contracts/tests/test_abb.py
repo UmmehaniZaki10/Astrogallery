@@ -184,7 +184,7 @@ def test_abb_staking(contracts, accounts, chain):
         withdraw_transaction = staking_contract.withdraw(
             {"from": user}
         )
-        # assert tokenX.balanceOf(user) == initial_user_balance + amount
+        assert tokenX.balanceOf(user) == initial_user_balance + amount
         assert claimable_tokens == amount
         assert tokenX.balanceOf(
             staking_contract.address) == initial_tokenX_balance_of_staking_contract - amount
