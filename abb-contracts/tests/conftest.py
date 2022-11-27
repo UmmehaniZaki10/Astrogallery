@@ -7,9 +7,9 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def contracts(accounts, AstroToken, BFR, StakingABB):
+def contracts(accounts, AstroToken, TokenX, StakingABB):
 
-    tokenX = BFR.deploy({"from": accounts[1]})
+    tokenX = TokenX.deploy({"from": accounts[1]})
 
     staking_contract = StakingABB.deploy(tokenX.address, {"from": accounts[0]})
 

@@ -97,7 +97,7 @@ contract StakingABB is ReentrancyGuard {
         while (n < userStakingDetails.length) {
             if (
                 userStakingDetails[n].depositTimestamp +
-                    userStakingDetails[n].lockUpPeriod <=
+                    (userStakingDetails[n].lockUpPeriod * 1 days) <=
                 block.timestamp
             ) {
                 amountToWithdraw += userStakingDetails[n].amount;
