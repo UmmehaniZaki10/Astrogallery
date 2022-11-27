@@ -55,6 +55,14 @@ contract StakingABB is ReentrancyGuard {
             (365 * 1e4);
     }
 
+    function getUserStakedAmounts(address account)
+        external
+        view
+        returns (StakedAmount[] memory stakedAmounts)
+    {
+        stakedAmounts = stakeDetailPerUser[account].stakedAmounts;
+    }
+
     // lockUpDays : Input in number of days
     // Reward will be returned with a factor of 1e18 (ABB token decimals)
     function calculateReward(uint256 amount, uint256 lockUpDays)
@@ -91,22 +99,26 @@ contract StakingABB is ReentrancyGuard {
         }
     }
 
-    function claimableTokens(
-        address account // CHECK: linked list
-    ) external view returns (uint256 amountToWithdraw) {
-        StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
-            .stakedAmounts;
-        uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
+    function claimableTokens(address account)
+        external
+        view
+        returns (uint256 amountToWithdraw)
+    {
+        StakeDetail memory userStakingDetails = stakeDetailPerUser[account];
+        uint256 startIndex = userStakingDetails.startIndex;
         uint256 n = startIndex;
-        while (n < userStakingDetails.length) {
+
+        while (n < userStakingDetails.stakedAmounts.length) {
+            StakedAmount memory currentStakeBlock = userStakingDetails
+                .stakedAmounts[n];
             if (
-                userStakingDetails[n].depositTimestamp +
-                    (userStakingDetails[n].lockUpPeriod * 1 days) <=
+                currentStakeBlock.depositTimestamp +
+                    (currentStakeBlock.lockUpPeriod * 1 days) <=
                 block.timestamp
             ) {
-                amountToWithdraw += userStakingDetails[n].amount;
+                amountToWithdraw += currentStakeBlock.amount;
             }
-            n = userStakingDetails[n].nextIndex;
+            n = currentStakeBlock.nextIndex;
         }
     }
 
