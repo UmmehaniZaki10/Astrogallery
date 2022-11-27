@@ -153,40 +153,41 @@ contract StakingABB is ReentrancyGuard {
     }
 
     function withdraw() external nonReentrant {
-        StakedAmount[] memory userStakingDetails = stakeDetailPerUser[
-            msg.sender
-        ].stakedAmounts;
-        StakedAmount[] memory revisedUserStakingDetails;
-
-        uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
+        StakeDetail memory userStakingDetails = stakeDetailPerUser[msg.sender];
+        uint256 startIndex = userStakingDetails.startIndex;
         uint256 n = startIndex;
         uint256 formerIndex;
         uint256 amountToWithdraw;
         uint256 collectedRewards;
-        while (n < userStakingDetails.length) {
+
+        while (n < userStakingDetails.stakedAmounts.length) {
+            StakedAmount memory currentStakeBlock = userStakingDetails
+                .stakedAmounts[n];
             if (
-                userStakingDetails[n].depositTimestamp +
-                    userStakingDetails[n].lockUpPeriod <=
+                currentStakeBlock.depositTimestamp +
+                    currentStakeBlock.lockUpPeriod <=
                 block.timestamp
             ) {
-                amountToWithdraw += userStakingDetails[n].amount;
+                amountToWithdraw += currentStakeBlock.amount;
                 collectedRewards += _calculateReward(
-                    userStakingDetails[n].amount,
-                    userStakingDetails[n].lockUpPeriod,
-                    userStakingDetails[n].lockUpPeriod
+                    currentStakeBlock.amount,
+                    currentStakeBlock.lockUpPeriod,
+                    currentStakeBlock.lockUpPeriod
                 );
 
                 if (n == startIndex) {
-                    startIndex = userStakingDetails[n].nextIndex;
+                    startIndex = currentStakeBlock.nextIndex;
                 } else {
-                    userStakingDetails[formerIndex]
-                        .nextIndex = userStakingDetails[n].nextIndex;
+                    userStakingDetails
+                        .stakedAmounts[formerIndex]
+                        .nextIndex = currentStakeBlock.nextIndex;
                 }
             } else {
                 formerIndex = n;
             }
-            n = userStakingDetails[n].nextIndex;
+            n = currentStakeBlock.nextIndex;
         }
+
         stakeDetailPerUser[msg.sender].startIndex = startIndex;
         stakeDetailPerUser[msg.sender].collectedRewards = collectedRewards;
         totalStakedAmount -= amountToWithdraw;
