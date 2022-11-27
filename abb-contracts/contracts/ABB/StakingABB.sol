@@ -16,7 +16,7 @@ contract StakingABB is ReentrancyGuard {
         uint256 nextIndex;
     }
     struct StakeDetail {
-        uint256 collectedRewards; // done: Value not updating
+        uint256 collectedRewards; 
         StakedAmount[] stakedAmounts;
         uint256 startIndex;
     }
@@ -29,11 +29,13 @@ contract StakingABB is ReentrancyGuard {
         uint256 unlockTime
     );
     event Withdraw(address indexed account, uint256 amount);
-
     mapping(address => StakeDetail) public stakeDetailPerUser;
     mapping(uint256 => uint256) public lockupDaysToAPY;
 
-    // Sets the lock-up days with their corresponding APY in the constructor
+    /************************************************
+     *  CONSTRUCTOR
+     ***********************************************/
+
     constructor(ERC20 token) {
         ABB = token;
         lockupDaysToAPY[30] = 500;
@@ -41,7 +43,13 @@ contract StakingABB is ReentrancyGuard {
         lockupDaysToAPY[90] = 1500;
     }
 
-    // Reward will be returned with a factor of 1e18 (ABB token decimals)
+    /************************************************
+     *  READ FUNCTIONS
+     ***********************************************/
+
+    /**
+     * @notice Base formula for reward calculations as per the corresponding APY.Reward returned with a factor of 1e18 (ABB token decimals)
+     */
     function _calculateReward(
         uint256 amount,
         uint256 lockUpDays,
@@ -55,6 +63,9 @@ contract StakingABB is ReentrancyGuard {
             (365 * 1e4);
     }
 
+    /**
+     * @notice Used for getting the list of staking details of a user
+     */
     function getUserStakedAmounts(address account)
         external
         view
@@ -63,8 +74,9 @@ contract StakingABB is ReentrancyGuard {
         stakedAmounts = stakeDetailPerUser[account].stakedAmounts;
     }
 
-    // lockUpDays : Input in number of days
-    // Reward will be returned with a factor of 1e18 (ABB token decimals)
+    /**
+     * @notice Used for getting the expected reward as per the input parameters
+     */
     function calculateReward(uint256 amount, uint256 lockUpDays)
         external
         view
@@ -73,6 +85,9 @@ contract StakingABB is ReentrancyGuard {
         reward = _calculateReward(amount, lockUpDays, lockUpDays);
     }
 
+    /**
+     * @notice Used for getting accrued reward for a user
+     */
     function calculateUserReward(address account)
         external
         view
@@ -99,6 +114,9 @@ contract StakingABB is ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Used for getting the tokens that have completed their staking period and are available to withdraw.
+     */
     function claimableTokens(address account)
         external
         view
@@ -122,7 +140,13 @@ contract StakingABB is ReentrancyGuard {
         }
     }
 
-    // Lockup period is in days
+    /************************************************
+     *  WRITE FUNCTIONS
+     ***********************************************/
+
+    /**
+     * @notice Used for staking tokens for 30, 60, or 90 days. LockupPeriod is in days.
+     */
     function stake(
         uint256 amount,
         uint256 lockUpPeriod,
@@ -152,6 +176,9 @@ contract StakingABB is ReentrancyGuard {
         );
     }
 
+    /**
+     * @notice Used for withdrawing tokens which have completed their staking period 
+     */
     function withdraw() external nonReentrant {
         StakeDetail memory userStakingDetails = stakeDetailPerUser[msg.sender];
         uint256 startIndex = userStakingDetails.startIndex;
