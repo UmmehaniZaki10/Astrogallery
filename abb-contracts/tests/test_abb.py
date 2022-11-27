@@ -10,6 +10,7 @@ def test_abb_staking(contracts, accounts, chain):
     staking_contract = contracts["staking_contract"]
     user_1 = accounts[2]
     user_2 = accounts[3]
+    user_3 = accounts[4]
     ONE_DAY = 86400
     transfer_amount = 100000 * int(1e18)
     amount_1 = 100 * int(1e18)
@@ -149,19 +150,18 @@ def test_abb_staking(contracts, accounts, chain):
         ), "Incorrect claimable tokens"
         chain.revert()
 
-    def test_withdraw_flow(lock_up_period, amount):
+    def test_withdraw_flow(lock_up_period, amount, user):
         # Withdraw before lock up period
         initial_tokenX_balance_of_staking_contract = tokenX.balanceOf(
             staking_contract.address
         )
         initial_total_staked_amount = staking_contract.totalStakedAmount()
-        initial_user_balance = tokenX.balanceOf(user_1)
-        claimable_tokens = staking_contract.claimableTokens(user_1)
-        user_reward = staking_contract.calculateUserReward(user_1)
+        initial_user_balance = tokenX.balanceOf(user)
+        claimable_tokens = staking_contract.claimableTokens(user)
         withdraw_transaction = staking_contract.withdraw(
-            {"from": user_1}
+            {"from": user}
         )
-        assert tokenX.balanceOf(user_1) == initial_user_balance
+        assert tokenX.balanceOf(user) == initial_user_balance
         assert claimable_tokens == 0
         assert tokenX.balanceOf(
             staking_contract.address) == initial_tokenX_balance_of_staking_contract
@@ -174,20 +174,20 @@ def test_abb_staking(contracts, accounts, chain):
             staking_contract.address
         )
         initial_total_staked_amount = staking_contract.totalStakedAmount()
-        initial_user_balance = tokenX.balanceOf(user_1)
-        claimable_tokens = staking_contract.claimableTokens(user_1)
+        initial_user_balance = tokenX.balanceOf(user)
+        claimable_tokens = staking_contract.claimableTokens(user)
         withdraw_transaction = staking_contract.withdraw(
-            {"from": user_1}
+            {"from": user}
         )
-        assert tokenX.balanceOf(user_1) == initial_user_balance + amount
+        assert tokenX.balanceOf(user) == initial_user_balance + amount
         assert claimable_tokens == amount
         assert tokenX.balanceOf(
             staking_contract.address) == initial_tokenX_balance_of_staking_contract - amount
         assert staking_contract.totalStakedAmount() == initial_total_staked_amount - amount
-        assert withdraw_transaction.events["Withdraw"]["account"] == user_1
+        assert withdraw_transaction.events["Withdraw"]["account"] == user
         assert withdraw_transaction.events["Withdraw"]["amount"] == amount
         assert (
-            staking_contract.claimableTokens(user_1) == 0
+            staking_contract.claimableTokens(user) == 0
         ), "Incorrect claimable tokens"
 
         
@@ -205,7 +205,7 @@ def test_abb_staking(contracts, accounts, chain):
     test_claimable_tokens(amount_1, user_1)
     traverse(user_1)
     user_reward = staking_contract.calculateUserReward(user_1)
-    test_withdraw_flow(lock_up_period, amount_1)
+    test_withdraw_flow(lock_up_period, amount_1, user_1)
     traverse(user_1)
     # Additional Checks
     assert isclose(
@@ -238,9 +238,21 @@ def test_abb_staking(contracts, accounts, chain):
     test_staking_flow(60, amount_1, user_2)
     test_staking_flow(90, amount_1, user_2)
     traverse(user_2)
-    test_withdraw_flow(lock_up_period, amount_1)
+    test_withdraw_flow(lock_up_period, amount_1, user_3)
     traverse(user_2)
-    
+
+    # FLOW 3 : USER WITH MULTIPLE STAKES, WITHDRAWS THE FIRST 2 STAKE AMOUNTS
+    lock_up_period = 30
+    test_initital_set_up(transfer_amount,user_3)
+    test_staking_flow(lock_up_period, amount_1, user_3)
+    test_rewards(lock_up_period, amount_1, user_3)
+    test_claimable_tokens(amount_1, user_3)
+    test_staking_flow(30, amount_1, user_3)
+    test_staking_flow(60, amount_1, user_3)
+    test_staking_flow(90, amount_1, user_3)
+    traverse(user_3)
+    test_withdraw_flow(lock_up_period, amount_1*2, user_3)
+    traverse(user_3)
 
 
     # ALL PERMUTATIONS AND COMBINATIONS
