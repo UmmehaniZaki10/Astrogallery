@@ -146,7 +146,7 @@ def test_abb_staking(contracts, accounts, chain):
         assert (
             staking_contract.claimableTokens(user) == amount_to_stake
         ), "Incorrect claimable tokens"
-        chain.sleep(95 * ONE_DAY)
+        chain.sleep(20 * ONE_DAY)
         chain.mine(2)
         assert (
             staking_contract.claimableTokens(user) == amount_to_stake
@@ -282,6 +282,7 @@ def test_abb_staking(contracts, accounts, chain):
     test_staking_flow(90, amount_1, user_5)
     test_staking_flow(30, amount_1, user_5)
     test_staking_flow(30, amount_1, user_5)
+    test_claimable_tokens(amount_1*2, user_5)
     traverse(user_5)
     test_withdraw_flow(30, amount_1*2, user_5)
     traverse(user_5)
@@ -299,6 +300,8 @@ def test_abb_staking(contracts, accounts, chain):
     traverse(user_6)
     test_withdraw_flow(60, 300e18, user_6)
     traverse(user_6)
+    test_withdraw_flow(90, 200e18, user_6)
+    traverse(user_6)
 
     print(staking_contract.stakeDetailPerUser(user_6)[0])
     staking_contract.withdraw(
@@ -306,4 +309,4 @@ def test_abb_staking(contracts, accounts, chain):
     )
     print(staking_contract.stakeDetailPerUser(user_6)[0])
 
-    assert staking_contract.calculateUserReward(user_6) == 7397260273972602738
+    assert staking_contract.calculateUserReward(user_6) == 9863013698630136984
