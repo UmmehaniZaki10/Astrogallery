@@ -165,7 +165,7 @@ contract StakingABB is ReentrancyGuard {
                 .stakedAmounts[n];
             if (
                 currentStakeBlock.depositTimestamp +
-                    currentStakeBlock.lockUpPeriod <=
+                    (currentStakeBlock.lockUpPeriod * 1 days)  <=
                 block.timestamp
             ) {
                 amountToWithdraw += currentStakeBlock.amount;
