@@ -1,23 +1,34 @@
 import { Stake } from '../generated/StakingABB/StakingABB'
-import { StakingData} from '../generated/schema'
-import { BigInt } from '@graphprotocol/graph-ts'
-
+import { StakingData, ABB} from '../generated/schema'
 
 export function handleStake(event: Stake): void {
-
-  let code = (Math.random() + 1).toString(36).substring(30);
-  let stakingData = new StakingData(code)
-  stakingData.address = event.params.account
+  let stakingData = new StakingData(event.transaction.hash)
+  stakingData.account = event.params.account
   stakingData.amount = event.params.amount
   stakingData.solanaAddress = event.params.solanaAddress
+  // stakingData.lockUpPeriod = event.params.lockUpPeriod
+  stakingData.stakingTime = event.params.unlockTime
+  stakingData.stakingTime = event.params.currentTime
   stakingData.save()  
+}
+
+export function handleApprove(event: Stake): void {
+  let abbData = new ABB(event.transaction.hash)
+  abbData.account = event.params.account
+  abbData.save()  
 }
 
 // Query
 
 // query StakingData {
 //   stakingDatas {
+//     id
+//     lockUpPeriod
 //     address
 //     amount
+//     solanaAddress
+//     stakingTime
+//     unlockTime
 //   }
 // }
+

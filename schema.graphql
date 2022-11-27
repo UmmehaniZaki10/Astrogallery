@@ -1,6 +1,14 @@
 type StakingData @entity {
-  id: String! 
-  address: Bytes
+  id: Bytes! 
+  account: Bytes
   amount: BigInt
-  solanaAddress : Bytes
+  lockUpPeriod:Int
+  solanaAddress: String
+  stakingTime: BigInt
+  unlockTime: BigInt
+}
+
+type ABB @entity {
+  id: Bytes! 
+  account: Bytes
 }
