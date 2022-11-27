@@ -16,7 +16,7 @@ contract StakingABB is ReentrancyGuard {
         uint256 nextIndex;
     }
     struct StakeDetail {
-        uint256 collectedRewards; // TODO: Value not updating
+        uint256 collectedRewards; // done: Value not updating
         StakedAmount[] stakedAmounts;
         uint256 startIndex;
     }
@@ -66,34 +66,43 @@ contract StakingABB is ReentrancyGuard {
     }
 
     function calculateUserReward(
-        address account // TODO: linked list + stakeDetailPerUser[msg.sender].collectedRewards
+        address account // Check: linked list + stakeDetailPerUser[msg.sender].collectedRewards
     ) external view returns (uint256 reward) {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
             .stakedAmounts;
-        for (uint256 n = 0; n < userStakingDetails.length; n++) {
+        uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
+        uint256 n = startIndex;
+        reward = stakeDetailPerUser[account].collectedRewards;
+        while (n < userStakingDetails.length) {
             uint256 dayCount = (block.timestamp -
-                userStakingDetails[n].depositTimestamp) / 1 days;
+            userStakingDetails[n].depositTimestamp) / 1 days;
             reward += _calculateReward(
                 userStakingDetails[n].amount,
                 userStakingDetails[n].lockUpPeriod,
                 dayCount
-            );
+            ); // done : maintain a user level variable which adds up this value
+            n = userStakingDetails[n].nextIndex;
         }
     }
+    
 
     function claimableTokens(
-        address account // TODO: linked list
+        address account // CHECK: linked list
     ) external view returns (uint256 tokens) {
         StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account]
             .stakedAmounts;
-        for (uint256 n = 0; n < userStakingDetails.length; n++) {
+        uint256 startIndex = stakeDetailPerUser[msg.sender].startIndex;
+        uint256 n = startIndex;
+        uint256 amountToWithdraw;
+        while (n < userStakingDetails.length) {
             if (
                 userStakingDetails[n].depositTimestamp +
-                    (userStakingDetails[n].lockUpPeriod * 1 days) <=
+                    userStakingDetails[n].lockUpPeriod <=
                 block.timestamp
             ) {
-                tokens += userStakingDetails[n].amount;
-            }
+                amountToWithdraw += userStakingDetails[n].amount;
+            } 
+            n = userStakingDetails[n].nextIndex;
         }
     }
 
@@ -103,7 +112,7 @@ contract StakingABB is ReentrancyGuard {
         uint256 lockUpPeriod,
         string memory solanaAddress
     ) external nonReentrant {
-        // TODO : non-reenterncy
+        // done : non-reenterncy - done
         address account = msg.sender;
         uint256 currentTime = block.timestamp;
         StakedAmount memory amountStaked = StakedAmount(
@@ -111,12 +120,12 @@ contract StakingABB is ReentrancyGuard {
             amount,
             lockUpPeriod,
             solanaAddress,
-            stakeDetailPerUser[account].stakedAmounts.length
+            stakeDetailPerUser[account].stakedAmounts.length+1
         );
         stakeDetailPerUser[account].stakedAmounts.push(amountStaked);
         totalStakedAmount += amount;
 
-        bool success = ABB.transferFrom(account, address(this), amount); // TODO: move to the end
+        bool success = ABB.transferFrom(account, address(this), amount); // done: move to the end - done
         require(success, "Staking didn't go through");
         emit Stake(
             account,
@@ -125,7 +134,7 @@ contract StakingABB is ReentrancyGuard {
             solanaAddress,
             currentTime,
             currentTime + lockUpPeriod * 1 days
-        ); // TODO: Add expiration and creation time
+        ); // done: Add expiration and creation time - done
     }
 
     function withdraw() external nonReentrant {
@@ -150,7 +159,7 @@ contract StakingABB is ReentrancyGuard {
                     userStakingDetails[n].amount,
                     userStakingDetails[n].lockUpPeriod,
                     userStakingDetails[n].lockUpPeriod
-                ); // TODO : maintain a user level variable which adds up this value
+                ); // done : maintain a user level variable which adds up this value
 
                 if (n == startIndex) {
                     startIndex = userStakingDetails[n].nextIndex;
@@ -165,10 +174,10 @@ contract StakingABB is ReentrancyGuard {
         }
         stakeDetailPerUser[msg.sender].startIndex = startIndex;
         stakeDetailPerUser[msg.sender].collectedRewards = collectedRewards;
-        totalStakedAmount -= amountToWithdraw; //TODO: DO a cumulative difference at the end
+        totalStakedAmount -= amountToWithdraw; //done: DO a cumulative difference at the end
 
-        bool success = ABB.transfer(msg.sender, amountToWithdraw); // TODO: DO a cumulative transfer at the end
+        bool success = ABB.transfer(msg.sender, amountToWithdraw); // done: DO a cumulative transfer at the end
         require(success, "The Withdrawal didn't go through");
-        emit Withdraw(msg.sender, amountToWithdraw); //TODO :  msg.sender, amount are enough
+        emit Withdraw(msg.sender, amountToWithdraw); //done :  msg.sender, amount are enough
     }
 }
