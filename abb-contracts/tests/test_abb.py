@@ -28,7 +28,6 @@ def test_abb_staking(contracts, accounts, chain):
     def traverse(account):
         index = staking_contract.stakeDetailPerUser(account)[1]
         all_stakings = staking_contract.getUserStakedAmounts(account)
-        # print('start', index, all_stakings)
         while (index < len(all_stakings)):
             print(index, end=' => ')
             index = all_stakings[index][4]
@@ -52,7 +51,7 @@ def test_abb_staking(contracts, accounts, chain):
         ) == 36.986301369863014
 
     def test_user_flow_pre_staking():
-        # assert staking_contract.calculateUserReward(user_1) == 0
+        assert staking_contract.calculateUserReward(user_1) == 0
         assert staking_contract.totalStakedAmount() == 0
         assert staking_contract.claimableTokens(user_1) == 0
         assert tokenX.balanceOf(
@@ -268,7 +267,6 @@ def test_abb_staking(contracts, accounts, chain):
     test_initital_set_up(transfer_amount, user_4)
     test_staking_flow(lock_up_period, amount_1, user_4)
     test_rewards(lock_up_period, amount_1, user_4)
-    # test_claimable_tokens(amount_1, user_4)
     test_staking_flow(90, amount_1, user_4)
     test_staking_flow(90, amount_1, user_4)
     test_staking_flow(30, amount_1, user_4)
@@ -281,7 +279,6 @@ def test_abb_staking(contracts, accounts, chain):
     test_initital_set_up(transfer_amount, user_5)
     test_staking_flow(lock_up_period, amount_1, user_5)
     test_rewards(lock_up_period, amount_1, user_5)
-    # test_claimable_tokens(amount_1, user_4)
     test_staking_flow(90, amount_1, user_5)
     test_staking_flow(30, amount_1, user_5)
     test_staking_flow(30, amount_1, user_5)
