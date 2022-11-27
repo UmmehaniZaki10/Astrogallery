@@ -189,11 +189,13 @@ contract StakingABB is ReentrancyGuard {
         }
 
         stakeDetailPerUser[msg.sender].startIndex = startIndex;
-        stakeDetailPerUser[msg.sender].collectedRewards = collectedRewards;
+        stakeDetailPerUser[msg.sender].collectedRewards += collectedRewards;
         totalStakedAmount -= amountToWithdraw;
 
-        bool success = ABB.transfer(msg.sender, amountToWithdraw);
-        require(success, "The Withdrawal didn't go through");
-        emit Withdraw(msg.sender, amountToWithdraw);
+        if (amountToWithdraw > 0) {
+            bool success = ABB.transfer(msg.sender, amountToWithdraw);
+            require(success, "The Withdrawal didn't go through");
+            emit Withdraw(msg.sender, amountToWithdraw);
+        }
     }
 }

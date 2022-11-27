@@ -28,7 +28,7 @@ def test_abb_staking(contracts, accounts, chain):
     def traverse(account):
         index = staking_contract.stakeDetailPerUser(account)[1]
         all_stakings = staking_contract.getUserStakedAmounts(account)
-        print('start', index, all_stakings)
+        # print('start', index, all_stakings)
         while (index < len(all_stakings)):
             print(index, end=' => ')
             index = all_stakings[index][4]
@@ -155,6 +155,7 @@ def test_abb_staking(contracts, accounts, chain):
         chain.revert()
 
     def test_withdraw_flow(lock_up_period, amount, user):
+
         # Withdraw before lock up period
         initial_tokenX_balance_of_staking_contract = tokenX.balanceOf(
             staking_contract.address
@@ -203,6 +204,9 @@ def test_abb_staking(contracts, accounts, chain):
     # FLOW 1 : USER WITH ONE STAKES, WITHDRAWS THE STAKE AMOUNT
     lock_up_period = 30
     chain.snapshot()
+    staking_contract.withdraw(
+        {"from": user_1}
+    )
     test_initital_set_up(transfer_amount, user_1)
     test_staking_flow(lock_up_period, amount_1, user_1)
     test_rewards(lock_up_period, amount_1, user_1)
@@ -272,9 +276,9 @@ def test_abb_staking(contracts, accounts, chain):
     test_withdraw_flow(30, amount_1, user_4)
     traverse(user_4)
 
-    ##### FLOW 5 : USER WITH MULTIPLE STAKES, WITHDRAWS THE LAST 2 STAKE AMOUNT
+    # FLOW 5 : USER WITH MULTIPLE STAKES, WITHDRAWS THE LAST 2 STAKE AMOUNT
     lock_up_period = 90
-    test_initital_set_up(transfer_amount,user_5)
+    test_initital_set_up(transfer_amount, user_5)
     test_staking_flow(lock_up_period, amount_1, user_5)
     test_rewards(lock_up_period, amount_1, user_5)
     # test_claimable_tokens(amount_1, user_4)
@@ -284,8 +288,8 @@ def test_abb_staking(contracts, accounts, chain):
     traverse(user_5)
     test_withdraw_flow(30, amount_1*2, user_5)
     traverse(user_5)
-    
-    ##### FLOW 6: USER WITH MULTIPLE WITHDRAW BLOCKS
+
+    # FLOW 6: USER WITH MULTIPLE WITHDRAW BLOCKS
     lock_up_period = 30
     test_initital_set_up(transfer_amount, user_6)
     test_staking_flow(lock_up_period, amount_1, user_6)
@@ -297,5 +301,12 @@ def test_abb_staking(contracts, accounts, chain):
     test_staking_flow(90, amount_1, user_6)
     traverse(user_6)
     test_withdraw_flow(60, 300e18, user_6)
+    traverse(user_6)
+
+    print(staking_contract.stakeDetailPerUser(user_6)[0])
+    staking_contract.withdraw(
+        {"from": user_6}
+    )
+    print(staking_contract.stakeDetailPerUser(user_6)[0])
 
     assert staking_contract.calculateUserReward(user_6) == 7397260273972602738

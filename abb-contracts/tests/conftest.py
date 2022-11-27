@@ -10,7 +10,9 @@ import pytest
 def contracts(accounts, AstroToken, TokenX, StakingABB):
 
     tokenX = TokenX.deploy({"from": accounts[1]})
-    # astro = AstroToken.deploy({"from": accounts[1]})
+    # tokenX = AstroToken.deploy({"from": accounts[1]})
+    # tokenX.transfer(accounts[0], 5e18)
+    # tokenX.enableTrading({"from": accounts[1]})
     # print(astro)
     staking_contract = StakingABB.deploy(tokenX.address, {"from": accounts[0]})
 
