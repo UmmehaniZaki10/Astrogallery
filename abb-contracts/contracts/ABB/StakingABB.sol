@@ -70,7 +70,7 @@ contract StakingABB is ReentrancyGuard {
         view
         returns (uint256 reward)
     {
-        StakedAmount[] memory userStakingDetails = stakeDetailPerUser[account];
+        StakeDetail memory userStakingDetails = stakeDetailPerUser[account];
         uint256 startIndex = userStakingDetails.startIndex;
         uint256 n = startIndex;
         reward = userStakingDetails.collectedRewards;
