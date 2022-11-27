@@ -165,7 +165,7 @@ contract StakingABB is ReentrancyGuard {
                 .stakedAmounts[n];
             if (
                 currentStakeBlock.depositTimestamp +
-                    (currentStakeBlock.lockUpPeriod * 1 days)  <=
+                    (currentStakeBlock.lockUpPeriod * 1 days) <=
                 block.timestamp
             ) {
                 amountToWithdraw += currentStakeBlock.amount;
@@ -178,7 +178,7 @@ contract StakingABB is ReentrancyGuard {
                 if (n == startIndex) {
                     startIndex = currentStakeBlock.nextIndex;
                 } else {
-                    userStakingDetails
+                    stakeDetailPerUser[msg.sender]
                         .stakedAmounts[formerIndex]
                         .nextIndex = currentStakeBlock.nextIndex;
                 }
