@@ -1,5 +1,6 @@
-import { Stake } from '../generated/StakingABB/StakingABB'
-import { StakingData, ABB} from '../generated/schema'
+import { Stake, Withdraw } from '../generated/StakingABB/StakingABB'
+import { StakingData, CurrentUserPosition} from '../generated/schema'
+import { BigInt } from "@graphprotocol/graph-ts"
 
 export function handleStake(event: Stake): void {
   let stakingData = new StakingData(event.transaction.hash)
@@ -10,16 +11,31 @@ export function handleStake(event: Stake): void {
   stakingData.unlockTime = event.params.unlockTime
   stakingData.stakingTime = event.params.currentTime
   stakingData.save()  
+  const zero = new BigInt(0)
+
+  let currentUserPosition = CurrentUserPosition.load(event.params.account)
+  if (currentUserPosition == null) {
+    let currentUserPosition = new CurrentUserPosition(event.params.account)
+    currentUserPosition.stakedAmount =  event.params.amount
+    currentUserPosition.claimedAmount = zero
+    currentUserPosition.save()  
+  } else {
+    currentUserPosition.stakedAmount = currentUserPosition.stakedAmount.plus(event.params.amount) 
+  }
 }
 
-export function handleApprove(event: Stake): void {
-  let abbData = new ABB(event.transaction.hash)
-  abbData.account = event.params.account
-  abbData.save()  
+export function handleWithdraw(event: Withdraw): void {
+  const zero = new BigInt(0)
+  let currentUserPosition = CurrentUserPosition.load(event.params.account)
+  if (currentUserPosition != null) {
+    currentUserPosition.stakedAmount = currentUserPosition.stakedAmount.minus(event.params.amount)
+    currentUserPosition.claimedAmount = currentUserPosition.stakedAmount.plus(event.params.amount)
+    currentUserPosition.save()  
+  } 
 }
 
 
-// Query
+// Query 1
 
 // query StakingData {
 //   stakingDatas {
@@ -33,3 +49,12 @@ export function handleApprove(event: Stake): void {
 //   }
 // }
 
+// Query 2
+
+// query CurrentUserPositions {
+//   currentUserPositions {
+//     id
+//     stakedAmount
+//     claimedAmount
+//   }
+// }

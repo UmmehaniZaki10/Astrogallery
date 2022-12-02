@@ -8,7 +8,8 @@ type StakingData @entity {
   unlockTime: BigInt
 }
 
-type ABB @entity {
+type CurrentUserPosition@entity {
   id: Bytes! 
-  account: Bytes
+  stakedAmount: BigInt!
+  claimedAmount: BigInt!
 }
