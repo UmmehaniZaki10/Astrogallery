@@ -21,6 +21,7 @@ export function handleStake(event: Stake): void {
     currentUserPosition.save()  
   } else {
     currentUserPosition.stakedAmount = currentUserPosition.stakedAmount.plus(event.params.amount) 
+    currentUserPosition.save()
   }
 }
 
